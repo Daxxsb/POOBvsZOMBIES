@@ -24,7 +24,6 @@ public class BrainStein extends Zombie {
                 System.out.println("Cerebros generados: " + cerebrosGenerados);
             }
         }, 0, 20000);
-
     }
 
     public int getTotalCerebros() {
