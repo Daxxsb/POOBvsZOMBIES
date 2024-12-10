@@ -1,21 +1,15 @@
 package domain;
 
+import javax.swing.*;
 import java.io.Serializable;
-import java.util.List;
 
 public class PVZGame implements Serializable {
-    // Declaración de un arreglo bidimensional para representar el tablero del juego
     private String[][] board;
     private Plant[][] plantas;
     private Zombie[][] zombies;
     private int soles;
     private int puntaje;
-    /**
-     * Constructor de la clase PVZGame.
-     *
-     * Este constructor inicializa el tablero de juego con un tamaño de 5 filas y 8 columnas,
-     * y establece el puntaje inicial en 0.
-     */
+
     public PVZGame() {
         board = new String[5][8];
         plantas = new Plant[5][8];
@@ -24,41 +18,27 @@ public class PVZGame implements Serializable {
         soles = 50;
     }
 
-    /**
-     * Obtiene el tablero de juego.
-     *
-     * @return Un arreglo bidimensional de tipo String que representa el estado actual del tablero de juego.
-     * Cada celda puede contener el nombre de una planta, un zombi o una cadena vacía.
-     */
     public String[][] getBoard() {
         return board;
     }
 
-    /**
-     * Obtiene el puntaje actual del juego.
-     *
-     * Este método devuelve el puntaje acumulado hasta el momento en el juego.
-     *
-     * @return El puntaje actual del juego.
-     */
+    public boolean getZombiesActivates(int row, int col) {
+        return zombies[row][col] != null && zombies[row][col].activo;
+    }
+
     public int getPuntaje() {
         return puntaje;
     }
 
-    /**
-     * Coloca una planta en una posición específica del tablero.
-     *
-     * Este método coloca una planta en una celda del tablero si esa celda está vacía
-     * (es decir, su valor es `null`) y no se encuentra en las columnas 0 o 7,
-     * las cuales están reservadas para la podadora y el spawn de zombis, respectivamente.
-     * Si la planta se coloca exitosamente, se aumenta el puntaje en 10 puntos.
-     *
-     * @param plant El tipo de planta a colocar en el tablero.
-     * @param row La fila en la que se desea colocar la planta.
-     * @param col La columna en la que se desea colocar la planta.
-     * @return `true` si la planta se coloca correctamente, `false` si no se pudo colocar.
-     */
-    public boolean placePlant(String plant, int row, int col) {
+    public ImageIcon getImagenPlanta(Plant planta) {
+        return planta.getImagenPlanta();
+    }
+
+    public ImageIcon getImagenZombie(Zombie zombie) {
+        return zombie.getImagenZombie();
+    }
+
+    public Plant placePlant(String plant, int row, int col) {
         if (board[row][col] == null && col != 0 && col != 7) {
             board[row][col] = plant;
 
@@ -66,25 +46,63 @@ public class PVZGame implements Serializable {
             int[] posicionesArreglo = {row, col};
             switch (plant) {
                 case "Sunflower":
-                    asignacionNuevaPlanta = new Sunflower(300, "Sunflower", posicionesArreglo);
+                    asignacionNuevaPlanta = new Sunflower("Sunflower", posicionesArreglo);
                     break;
                 case "Peashooter":
-                    asignacionNuevaPlanta = new PeasShooter(300, "Peashooter", posicionesArreglo);
+                    asignacionNuevaPlanta = new PeasShooter("Peashooter", posicionesArreglo);
                     break;
                 case "Wall-nut":
-                    asignacionNuevaPlanta = new WallNut(4000, "Wall-nut", posicionesArreglo);
-                    break;
+                    asignacionNuevaPlanta = new WallNut("Wall-nut", posicionesArreglo);
+                   break;
                 default:
-                    return false;
+                    return null;
             }
 
             plantas[row][col] = asignacionNuevaPlanta;
-
             puntaje += 10;
-
-            return true;
+            return asignacionNuevaPlanta;
         }
-        return false;
+        return null;
+    }
+
+    public Zombie placeZombie(String zombie, int row, int col) {
+        board[row][col] = zombie;
+
+        Zombie asignacionNuevoZombie;
+        int[] posicionesArreglo = {row, col};
+        switch (zombie) {
+            case "NormalZombie":
+                asignacionNuevoZombie = new NormalZombie("NormalZombie", posicionesArreglo);
+                break;
+            case "ConeHead":
+                asignacionNuevoZombie = new ConeHead("ConeHead", posicionesArreglo);
+                break;
+            case "BucketHead":
+                asignacionNuevoZombie = new BucketHead("BucketHead", posicionesArreglo);
+                break;
+            default:
+                return null;
+            }
+
+            zombies[row][col] = asignacionNuevoZombie;
+            return asignacionNuevoZombie;
+    }
+
+    public void moveZombies(int row, int col) {
+        // Recupera el zombie que se moverá
+        Zombie zombieAMover = zombies[row][col];
+
+        if (zombieAMover != null) { // Asegúrate de que no sea null
+            int nuevaCol = zombieAMover.moveZombie();
+            zombies[row][nuevaCol] = zombieAMover;
+            board[row][nuevaCol] = zombieAMover.tipo;
+            zombies[row][col] = null;
+            board[row][col] = "Empty";
+        }
+    }
+
+    public Plant placePodadora(int[] posicion) {
+        return new Podadora("podadora", posicion);
     }
 
     public boolean gastoSoles(String plant) {
@@ -137,11 +155,7 @@ public class PVZGame implements Serializable {
         return solesSumados;
     }
 
-    public Plant[][] getTableroPlantas() {
-        return plantas;
-    }
-
-    private void imprimirTableros() {
+    public void imprimirTableros() {
         System.out.println("Estado de Board:");
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[i].length; j++) {
@@ -149,33 +163,8 @@ public class PVZGame implements Serializable {
             }
             System.out.println();
         }
-
-        System.out.println("Estado de Plantas:");
-        for (int i = 0; i < plantas.length; i++) {
-            for (int j = 0; j < plantas[i].length; j++) {
-                if (plantas[i][j] != null) {
-                    System.out.print(plantas[i][j].getClass().getSimpleName() + "\t");
-                } else {
-                    System.out.print("Empty\t");
-                }
-            }
-            System.out.println();
-        }
     }
 
-    /**
-     * Elimina una planta de una posición específica del tablero.
-     *
-     * Este método elimina una planta de una celda del tablero si esa celda no está vacía
-     * (es decir, si contiene una planta) y si la celda no se encuentra en las columnas 0 o 7,
-     * las cuales están reservadas para la podadora y el spawn de zombis, respectivamente.
-     * Si la planta se elimina correctamente, se disminuye el puntaje en 5 puntos.
-     *
-     * @param row La fila de la planta que se desea eliminar.
-     * @param col La columna de la planta que se desea eliminar.
-     * @return `true` si la planta se elimina correctamente, `false` si no se pudo eliminar
-     *         debido a que la celda está vacía o se encuentra en una columna restringida.
-     */
     public boolean removePlant(int row, int col) {
         if (board[row][col] != null && col != 0 && col != 7) {
             board[row][col] = null;
@@ -185,20 +174,6 @@ public class PVZGame implements Serializable {
         return false;
     }
 
-    /**
-     * Obtiene las posiciones disponibles en el tablero, dependiendo de si se está realizando una eliminación o colocación de plantas.
-     *
-     * Este método devuelve un array de cadenas que representan las posiciones (fila y columna) en el tablero donde
-     * se puede colocar o eliminar una planta. La función se comporta de manera diferente según el parámetro `isRemoval`:
-     * - Si `isRemoval` es `true`, busca las posiciones ocupadas por plantas que pueden ser eliminadas (es decir, celdas
-     *   que no están vacías).
-     * - Si `isRemoval` es `false`, busca las posiciones vacías donde se pueden colocar nuevas plantas, excluyendo las
-     *   columnas 0 y 7, que están reservadas para la podadora y el spawn de zombis, respectivamente.
-     *
-     * @param isRemoval Si es `true`, busca las posiciones con plantas para eliminarlas; si es `false`, busca posiciones vacías
-     *                  para colocar nuevas plantas.
-     * @return Un array de cadenas con las posiciones disponibles, en formato "Fila X, Columna Y".
-     */
     public String[] getAvailablePositions(boolean isRemoval) {
         StringBuilder positions = new StringBuilder();
         for (int i = 0; i < board.length; i++) {
@@ -213,4 +188,5 @@ public class PVZGame implements Serializable {
         }
         return positions.toString().split(";");
     }
+
 }

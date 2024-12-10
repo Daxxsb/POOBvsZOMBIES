@@ -6,6 +6,9 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import javax.swing.Timer;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class PVZGUIWindow3 extends JFrame {
     private Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -21,6 +24,7 @@ public class PVZGUIWindow3 extends JFrame {
     private JButton[][] buttonMatrix;
     private Random random = new Random();
     private PVZGame game;
+    private Timer zombieMoverTimer;
 
     public PVZGUIWindow3(String modalidad, String modo, String dificultad, List<String> plantasSeleccionadas) {
         super("POOBvsZombies");
@@ -53,7 +57,6 @@ public class PVZGUIWindow3 extends JFrame {
 
     private void preparesElementsBoard() {
         addButtonsToMatrix();
-        addZombiesToMatrix();
     }
 
     private void addButtonsToMatrix() {
@@ -95,7 +98,6 @@ public class PVZGUIWindow3 extends JFrame {
                         System.out.println("Planta seleccionada: " + plantaActualSeleccionada);
                         if (game.gastoSoles(plantaActualSeleccionada)) {
                             addPlantstoMatrix(plantaActualSeleccionada, posicionBotonSeleccionado);
-                            game.placePlant(plantaActualSeleccionada, currentRow, currentCol);
                             plantaActualSeleccionada = null;
                         } else {
                             JOptionPane.showMessageDialog(null, "Cantidad de soles insuficiente.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -110,6 +112,9 @@ public class PVZGUIWindow3 extends JFrame {
         buttonPanel.setBounds(0, 0, screenWidth, screenHeight);
         background.add(buttonPanel);
         background.revalidate();
+
+        SwingUtilities.invokeLater(this::addPodadorasToMatrix);
+        SwingUtilities.invokeLater(this::addZombiesToMatrix);
     }
 
     private void addPlantstoMatrix(String plantaActualSeleccionada, int[] posicionBotonSeleccionado) {
@@ -133,54 +138,80 @@ public class PVZGUIWindow3 extends JFrame {
             plantaActualSeleccionada = null;
             posicionBotonSeleccionado = null;
             JOptionPane.showMessageDialog(null, "La posición seleccionada no está disponible para colocar una planta.", "Error", JOptionPane.ERROR_MESSAGE);
+            game.agregarSoles(50);
             return;
         }
 
+        ImageIcon imagen = game.getImagenPlanta(game.placePlant(plantaActualSeleccionada, row, col));
         JButton button = buttonMatrix[row][col];
-
-        String plantImagePath = "img/Plantas/" + plantaActualSeleccionada.toLowerCase() + ".gif";
-
-        ImageIcon plantIcon = new ImageIcon(plantImagePath);
-        button.setIcon(plantIcon);
+        button.setIcon(imagen);
 
         System.out.println("Planta " + plantaActualSeleccionada + " colocada en " + selectedPosition);
 
     }
 
-    private void addZombiesToMatrix() {
+    private void addPodadorasToMatrix() {
         int rows = 5;
-        int cols = 8;
-
         for (int row = 0; row < rows; row++) {
             JButton button = buttonMatrix[row][0];
-
-            int buttonWidth = button.getWidth();
-            int buttonHeight = button.getHeight();
-
-            ImageIcon mowerIcon = new ImageIcon("img/Plantas/lawnmowerIdle.gif");
-            Image mowerImage = mowerIcon.getImage();
-            Image resizedMowerImage = mowerImage.getScaledInstance((int)(buttonWidth * 0.6), (int)(buttonHeight * 0.6), Image.SCALE_SMOOTH);
-
-            button.setIcon(new ImageIcon(resizedMowerImage));
-        }
-
-        int zombiesCount = 5;
-        for (int i = 0; i < zombiesCount; i++) {
-            int row = random.nextInt(rows);
-            int col = random.nextInt(cols);
-
-            JButton button = buttonMatrix[row][col];
-
-            int buttonWidth = button.getWidth();
-            int buttonHeight = button.getHeight();
-
-            ImageIcon zombieIcon = new ImageIcon("img/Zombies/bucket.png");
-            Image zombieImage = zombieIcon.getImage();
-            Image resizedZombieImage = zombieImage.getScaledInstance((int)(buttonWidth * 0.6), (int)(buttonHeight * 0.6), Image.SCALE_SMOOTH);
-
-            button.setIcon(new ImageIcon(resizedZombieImage));
+            int[] posicion = {row, 0};
+            ImageIcon imagen = game.getImagenPlanta(game.placePodadora(posicion));
+            button.setIcon(imagen);
         }
     }
+
+    private void addZombiesToMatrix() {
+        moveZombies();
+        if ("Fácil".equals(dificultad)) {
+            Timer zombieSpawnerTimer = new Timer(25000, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    int row = random.nextInt(5);
+                    int col = 7;
+
+                    JButton button = buttonMatrix[row][col];
+                    ImageIcon imagen = game.getImagenZombie(game.placeZombie("NormalZombie", row, col));
+                    button.setIcon(imagen);
+                }
+            });
+
+            zombieSpawnerTimer.setDelay(25000);
+            zombieSpawnerTimer.setRepeats(true);
+            zombieSpawnerTimer.start();
+        }
+    }
+
+    private void moveZombies() {
+        if (zombieMoverTimer == null) {
+            zombieMoverTimer = new Timer(2000, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    for (int row = 0; row < buttonMatrix.length; row++) {
+                        for (int col = buttonMatrix[row].length - 1; col > 0; col--) {
+                            if (game.getZombiesActivates(row, col)) {
+                                game.moveZombies(row, col);
+
+                                JButton currentButton = buttonMatrix[row][col];
+                                JButton nextButton = buttonMatrix[row][col - 1];
+
+                                // ImageIcon imagen = game.getImagenZombie(game.placeZombie("NormalZombie", row, col));
+                                // nextButton.setIcon(imagen);
+                                ImageIcon zombieIcon = (ImageIcon) currentButton.getIcon();
+                                nextButton.setIcon(zombieIcon);
+                                currentButton.setIcon(null);
+                                game.imprimirTableros();
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+
+            zombieMoverTimer.setRepeats(true);
+            zombieMoverTimer.start();
+        }
+    }
+
 
     private void addSunBar() {
         JPanel sunBarPanel = new JPanel();

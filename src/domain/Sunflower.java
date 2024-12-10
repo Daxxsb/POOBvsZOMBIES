@@ -1,5 +1,6 @@
 package domain;
 
+import javax.swing.*;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -7,11 +8,14 @@ public class Sunflower extends Plant {
     private int solesGenerados;
     private Timer timer;
 
-    public Sunflower(int vida, String tipo, int[] xy) {
-        super(vida, tipo, xy);
+    public Sunflower(String tipo, int[] xy) {
+        super(tipo, xy);
+        vida = 300;
         sunCost = 50;
         plantado = true;
         solesGenerados = 0;
+        direccionImagenPlanta = "img/Plantas/sunflower.gif";
+        imagenPlanta = new ImageIcon(direccionImagenPlanta);
         startGeneratingSoles();
     }
 

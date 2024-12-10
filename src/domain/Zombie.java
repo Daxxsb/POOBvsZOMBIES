@@ -6,38 +6,29 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public abstract class Zombie extends Thread implements Serializable {
-    protected int hp;
-    protected String nombre;
-    protected Rectangle hitBox;
-    protected ImageIcon normal;
+    protected int vida;
+    protected String tipo;
+    protected String direccionImagenZombie;
+    protected ImageIcon imagenZombie;
+    protected int[] posicion;
+    protected boolean activo = false;
     protected int damage;
+    protected float rapidezAtaque;
     protected int cerCost;
-    protected transient ArrayList<Plant> plantas = new ArrayList();
-    protected transient ArrayList<Zombie> zombies = new ArrayList();
-    protected JLabel zombieLabel = new JLabel();
-    protected transient JPanel gamePanel;
 
-    private static final long SerialVersionUID = 777;
-    public Zombie(){
+    public Zombie(String tipo, int[] posicion){
+        this.tipo = tipo;
+        this.posicion = posicion;
+    }
+    public ImageIcon getImagenZombie() {
+        return imagenZombie;
     }
 
-    public Zombie(String nombre, int hp, ImageIcon normal, Rectangle hitbox, JPanel gamePanel){
-        this.nombre = nombre;
-        this.hp = hp;
-        this.normal = normal;
-
-
-        this.hitBox = hitbox;
-        zombieLabel.setBounds(hitbox);
-        zombieLabel.setIcon(normal);
-        this.gamePanel = gamePanel;
-
+    public int moveZombie() {
+        if (posicion[1] >= 0) {
+            posicion[1] -= 1;
+            activo = true;
+        }
+        return  posicion[1];
     }
-
-    public void dmg(int damage){
-        this.hp -= damage;
-    }
-
-
-
 }
