@@ -1,5 +1,6 @@
 package domain;
 
+import javax.swing.*;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -7,12 +8,14 @@ public class BrainStein extends Zombie {
     private int cerebrosGenerados;
     private Timer timer;
 
-    public BrainStein(int vida, String tipo, int[] xy) {
-        vida = 0;
-        tipo = "si";
-        cerCost = 50;
-        cerebrosGenerados = 0;
-        startGeneratingCerebros();
+    public BrainStein(ImageIcon imageZombie, int[] posicion, boolean activo){
+        super("brainStein",posicion);
+        this.imagenZombie = imageZombie;
+        this.activo = activo;
+        this.cerCost = 50;
+        this.vida = 300;
+        this.cerebrosGenerados = 0;
+        this.damage = 0;
     }
 
     private void startGeneratingCerebros() {
